@@ -1,0 +1,44 @@
+
+name: Build Next.js
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Next.js
+        run: yarn build
+
+      - name: Prepare deployment files
+        run: |
+          mkdir -p deploy/.next
+          cp -a .next/standalone/. deploy/
+          cp -a .next/static deploy/.next/static
+          if [ -d public ]; then
+            cp -a public deploy/public
+          fi
+
+      - name: Save production build
+        uses: actions/upload-artifact@v4
+        with:
+          name: admins-nextjs-build
+          path: deploy/
+          include-hidden-files: true
